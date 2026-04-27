@@ -1,2 +1,3 @@
-here is the final output model since it exceeds 100 mb.
-LINK : 
+here is the final output model files since it exceeds 100 mb (In case you don't want to go throught training).
+the one that's important is named "fine_tuned_vgg19.keras"
+LINK : https://drive.google.com/drive/folders/14uH1W9bC9VrXfkxuQnuyFlkujemd-U9O?usp=sharing
