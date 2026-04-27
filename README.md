@@ -1,187 +1,161 @@
-# StyleLens — CNN Visual E-Commerce Recommender
+# CNN Visual Recommendation System
 
-[![Python](https://img.shields.io/badge/python-3.12+-blue.svg)](https://www.python.org/)
-[![TensorFlow](https://img.shields.io/badge/TensorFlow-2.13+-orange.svg)](https://www.tensorflow.org/)
-[![Streamlit](https://img.shields.io/badge/Streamlit-1.32+-red.svg)](https://streamlit.io/)
+A deep learning-based visual similarity search system for fashion products. Upload a product image and get 10 visually similar recommendations using CNN feature extraction (VGG19).
 
-A deep-learning powered product recommender built on **VGG19 transfer learning** + **TensorFlow**, wrapped in a polished **Streamlit** UI. Upload any product photo and get 10 visually similar recommendations from a 44k-image fashion catalogue.
+![Python](https://img.shields.io/badge/python-3.12+-blue.svg)
+![TensorFlow](https://img.shields.io/badge/TensorFlow-2.13+-orange.svg)
+![Streamlit](https://img.shields.io/badge/Streamlit-1.32+-red.svg)
 
----
+## What the Project Does
 
-## Architecture Overview
+This project implements a visual fashion product recommender that:
 
-```
-Query Image (1080×1440 JPEG)
-        │
-        ▼
-  Preprocessing (resize 224×224, VGG19 mean subtraction)
-        │
-        ▼
-  VGG19 Backbone (ImageNet pretrained)
-  ─ Block 1-4: frozen
-  ─ Block 5:   fine-tuned on fashion data  ← Transfer Learning
-        │
-        ▼
-  GlobalAvgPool → Dense(512) → Dropout → Dense(256)  [fine-tune head]
-  ─ OR ─
-  fc1 → fc2  (4096-dim)  [base VGG19 mode]
-        │
-        ▼
-  L2-Normalised Feature Vector
-        │
-        ▼
-  Cosine Similarity vs 44k-product Feature Matrix
-        │
-        ▼
-  Hybrid Score = 0.75 × Visual + 0.25 × Metadata (articleType, colour, gender)
-        │
-        ▼
-  Top-10 Recommendations + Product Cards
+- **Extracts deep visual features** from product images using VGG19 transfer learning
+- **Builds a feature index** for ~44k fashion products
+- **Provides similarity search** via cosine similarity on 4096-dim embeddings
+- **Offers hybrid scoring** combining visual similarity (70%) with metadata matching (30%)
+- **Delivers an interactive Streamlit UI** for image upload and recommendation display
+
+## Why the Project Is Useful
+
+- **No training required** — Use pre-computed ImageNet weights for immediate results
+- **Fine-tuning support** — Train on your own product categories for domain adaptation
+- **Fast inference** — Pre-computed feature index enables sub-second similarity search
+- **Hybrid recommendations** — Combines visual features with metadata (type, color, category)
+- **Production-ready** — Clean Python package with proper CLI interfaces
+
+## Quick Start
+
+### 1. Clone and Setup
+
+```bash
+# Navigate to project directory
+cd cnn-visual-recommendation-system
+
+# Activate virtual environment
+.venv\Scripts\Activate.ps1   # Windows
+# source .venv/bin/activate   # Linux/macOS
 ```
 
----
+### 2. Install Dependencies
+
+```bash
+pip install -r requirements.txt
+```
+
+Or with uv:
+
+```bash
+uv sync
+```
+
+### 3. Run the Application
+
+```bash
+streamlit run src/app.py
+```
+
+The app will open at `http://localhost:8501`. Upload a product image to get 10 similar recommendations.
 
 ## Project Structure
 
 ```
-cnn_recommender/
-├── app.py                 # Streamlit UI (main entry point)
-├── feature_extractor.py   # VGG19 preprocessing & feature extraction
-├── recommender.py         # Cosine similarity engine + metadata re-ranking
-├── train.py               # Transfer learning fine-tuning script
-├── build_index.py         # Pre-compute & cache all product embeddings
-├── requirements.txt
-└── README.md
-
-dataset/                   # Your data (place alongside cnn_recommender/)
-├── images/                # 44441 JPEG files (1163.jpg … 60000.jpg)
-└── styles.csv             # id, gender, masterCategory, subCategory, articleType, baseColour, season, year, usage, productDisplayName
+cnn-visual-recommendation-system/
+├── src/
+│   ├── app.py              # Streamlit web UI
+│   ├── build_index.py      # Build feature index from images
+│   ├── feature_extractor.py # VGG19 feature extraction
+│   ├── recommender.py      # Similarity search engine
+│   └── train.py            # Fine-tuning script
+├── dataset/
+│   ├── images/             # Product images (44k+)
+│   └── styles.csv         # Product metadata
+├── features/
+│   └── features.pkl       # Pre-computed feature index
+├── models/
+│   ├── checkpoint_phase1.keras
+│   └── fine_tuned_vgg19.keras
+├── pyproject.toml
+└── requirements.txt
 ```
 
----
+## Usage Examples
 
-## Quick Start
+### Building a Feature Index
 
-### 1. Install dependencies
 ```bash
-pip install -r requirements.txt
-# GPU support (optional but recommended for 44k images):
-pip install tensorflow[and-cuda]
+# Using base VGG19 (ImageNet weights)
+python src/build_index.py --images_dir ./dataset/images --output ./features/features.pkl
+
+# Using fine-tuned model
+python src/build_index.py --images_dir ./dataset/images \
+                          --model_path ./models/fine_tuned_vgg19.keras \
+                          --output ./features/features.pkl
 ```
 
-### 2. (Optional) Fine-tune VGG19 on the fashion dataset
-This step adapts the model to recognize fashion-specific categories.
+### Fine-Tuning the Model
+
 ```bash
-python train.py \
-  --images_dir ./images \
-  --styles_csv ./styles.csv \
-  --epochs 10 \
-  --fine_tune_epochs 5 \
-  --output_model ./fine_tuned_vgg19.keras
-```
-**Tip:** Skip this step to use base ImageNet VGG19 — it already gives strong results for colour/texture matching. Fine-tuning improves category-level similarity.
-
-### 3. Build the feature index
-Extract and cache 4096-dim embeddings for all 44k products. **This runs once and takes ~30-90 min on CPU, ~5-15 min on GPU.**
-```bash
-# Base VGG19:
-python build_index.py --images_dir ./images --output features.pkl
-
-# Fine-tuned model:
-python build_index.py \
-  --images_dir ./images \
-  --model_path ./fine_tuned_vgg19.keras \
-  --output features.pkl
-```
-The script supports **resuming** — safe to interrupt and re-run.
-
-### 4. Launch the Streamlit app
-```bash
-streamlit run app.py
+python src/train.py --images_dir ./dataset/images \
+                    --styles_csv ./dataset/styles.csv \
+                    --epochs 10 \
+                    --output_model models/fine_tuned_vgg19.keras
 ```
 
-Open [http://localhost:8501](http://localhost:8501) in your browser.
+### Running the Recommender
 
----
+```python
+from src.recommender import ProductRecommender, load_styles
+from src.feature_extractor import extract_single_feature, build_feature_extractor
+import pickle
 
-## How It Works
+# Load data
+with open("features/features.pkl", "rb") as f:
+    feature_db = pickle.load(f)
+styles_df = load_styles("dataset/styles.csv")
 
-### Image Preprocessing
-VGG19 expects **224×224 RGB** inputs. Your 1080×1440 images are:
-1. Resized to 224×224 (PIL `LANCZOS` resampling — no padding, aspect ratio adjustable)
-2. Converted to `float32` NumPy array
-3. Processed with `vgg19.preprocess_input()` — subtracts ImageNet channel means `[103.939, 116.779, 123.68]` in BGR order
+# Build recommender
+recommender = ProductRecommender(feature_db, styles_df, alpha=0.7)
 
-### Transfer Learning Strategy (2-Phase)
-| Phase | Layers Trained | Learning Rate | Purpose |
-|-------|---------------|---------------|---------|
-| 1 | New head only (Dense 512→256→N) | 1e-3 | Learn fashion-specific decision boundary |
-| 2 | block5_conv1/2/3 + head | 1e-5 | Adapt low-level texture detectors to fashion textures |
-
-### Similarity Search
-- Feature vectors are **L2-normalised** at index time
-- Similarity = **dot product** (equivalent to cosine similarity for unit vectors)
-- **O(N)** scan over the full feature matrix using NumPy broadcasting — fast for 44k products
-- For >500k products, swap in FAISS for approximate nearest-neighbour search
-
-### Hybrid Ranking
+# Get recommendations
+model = build_feature_extractor()
+query_vector = extract_single_feature(model, "path/to/uploaded/image.jpg")
+results = recommender.recommend(query_vector, top_k=10)
+print(results)
 ```
-final_score = α × visual_cosine_score + (1-α) × metadata_overlap_score
-```
-- `α` (default 0.75) is adjustable in the sidebar
-- Metadata score weights: articleType (40%), masterCategory (30%), baseColour (20%), gender (10%)
 
----
+## Key Features
 
-## Configuration (Sidebar)
+| Feature | Description |
+|---------|-------------|
+| **VGG19 Transfer Learning** | Uses pre-trained ImageNet weights for feature extraction |
+| **4096-dim Embeddings** | Deep visual representations from fc2 layer |
+| **Cosine Similarity** | Efficient similarity metric for visual search |
+| **Hybrid Scoring** | Combines visual (α=0.7) + metadata (1-α=0.3) scores |
+| **Batch Processing** | Extract features for thousands of images efficiently |
+| **Fine-tuning Support** | Domain adaptation with custom classification head |
 
-| Setting | Default | Description |
-|---------|---------|-------------|
-| Images directory | `./images` | Path to your image folder |
-| Features file | `./features.pkl` | Cached embeddings (built by `build_index.py`) |
-| Styles CSV | `./styles.csv` | Product metadata |
-| Fine-tuned model | _(empty)_ | Optional path to `.keras` model |
-| Visual weight α | 0.75 | Balance visual vs. metadata similarity |
-| Top-K | 10 | Number of recommendations |
+## Dataset
 
----
+The project uses the [Fashion Product Images Dataset](https://www.kaggle.com/datasets/paramaggarwal/fashion-product-images-dataset) from Kaggle:
 
-## Performance Notes
+- **44,000+ product images** (various sizes, stored as JPG/PNG)
+- **Metadata CSV** with: id, gender, category, article type, color, season, year, usage
 
-- **Feature extraction**: ~150ms/image on CPU, ~20ms on GPU
-- **Index build** (44k images): ~2h on CPU, ~15min on GPU
-- **Inference** (single query): <1s including similarity search over 44k vectors
-- **Memory**: ~44k × 4096 × 4 bytes ≈ **700 MB** for the feature matrix
+## Requirements
 
----
+- Python 3.12+
+- TensorFlow 2.13+
+- Streamlit 1.32+
+- NumPy, Pandas, scikit-learn, Pillow, tqdm
 
-## Why This Project Is Useful
-
-| Feature | Benefit |
-|---------|---------|
-| **Transfer Learning** | Leverages ImageNet pretrained VGG19 — no need to train from scratch |
-| **Hybrid Scoring** | Combines visual similarity with metadata for more relevant results |
-| **Resumable Indexing** | Build the feature index in chunks — interrupt and resume anytime |
-| **Customizable Weights** | Adjust visual vs. metadata balance via sidebar slider |
-| **Pre-trained Model Included** | Comes with `fine_tuned_vgg19.keras` for immediate use |
-
----
-
-## Where Users Can Get Help
-
-- **Issues**: Open a GitHub issue for bugs or feature requests
-- **Documentation**: This README covers setup and configuration; see code comments for API details
-- **Dataset**: The fashion product images are from [Kaggle](https://www.kaggle.com/datasets/paramaggarwal/fashion-product-images-dataset)
-
----
+See [requirements.txt](requirements.txt) for full dependency list.
 
 ## Who Maintains and Contributes
 
-This project was developed as a deep learning demonstration project.
+This project was developed as a deep learning demonstration for fashion product recommendation.
 
 ### Contributing
-
-Contributions are welcome! To get started:
 
 1. Fork the repository
 2. Create a feature branch (`git checkout -b feature/amazing-feature`)
@@ -189,10 +163,11 @@ Contributions are welcome! To get started:
 4. Push to the branch (`git push origin feature/amazing-feature`)
 5. Open a Pull Request
 
-Please ensure tests pass and code follows the existing style.
+### Support
 
----
+- Open an issue for bug reports or feature requests
+- Check existing issues before creating new ones
 
 ## License
 
-This project is available for educational and personal use. See the dataset [NOTICE](dataset/NOTICE ABOUT DATASET.txt) for data licensing terms.
+This project is for educational purposes. See the original dataset's license for data usage terms.
