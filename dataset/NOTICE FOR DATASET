@@ -1,0 +1,8 @@
+DATASET : https://www.kaggle.com/datasets/paramaggarwal/fashion-product-images-dataset
+
+I used a combination of two file types: PNG images for the visual data and a styles.csv file for the associated metadata. Each row in the CSV is
+  linked to an image through a unique ID that matches the image filename, which makes it easy to map features to the corresponding pictures.
+  I chose this approach because the dataset also provides JSON files, but they are large in number and size, with one JSON file per image.
+  These files contain not only information specific to each picture but also additional metadata that is not necessary for this project.
+  Although this extra information could be useful for other applications or more advanced feature extraction tasks, working with JSON would require processing each file
+  individually, which is less efficient. In contrast, the CSV file consolidates all image metadata into a single structured file, making it much easier and faster to access and process.
