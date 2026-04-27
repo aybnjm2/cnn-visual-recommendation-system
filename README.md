@@ -1,5 +1,9 @@
 # StyleLens — CNN Visual E-Commerce Recommender
 
+[![Python](https://img.shields.io/badge/python-3.12+-blue.svg)](https://www.python.org/)
+[![TensorFlow](https://img.shields.io/badge/TensorFlow-2.13+-orange.svg)](https://www.tensorflow.org/)
+[![Streamlit](https://img.shields.io/badge/Streamlit-1.32+-red.svg)](https://streamlit.io/)
+
 A deep-learning powered product recommender built on **VGG19 transfer learning** + **TensorFlow**, wrapped in a polished **Streamlit** UI. Upload any product photo and get 10 visually similar recommendations from a 44k-image fashion catalogue.
 
 ---
@@ -151,9 +155,44 @@ final_score = α × visual_cosine_score + (1-α) × metadata_overlap_score
 
 ---
 
-## Scaling to Production
+## Why This Project Is Useful
 
-1. **FAISS index**: Replace NumPy dot product with `faiss.IndexFlatIP` for millions of products
-2. **Image CDN**: Serve product images from S3/CloudFront instead of local disk
-3. **Model serving**: Export as TF SavedModel and serve via TensorFlow Serving
-4. **Async indexing**: Stream new products into the index without full recomputation
+| Feature | Benefit |
+|---------|---------|
+| **Transfer Learning** | Leverages ImageNet pretrained VGG19 — no need to train from scratch |
+| **Hybrid Scoring** | Combines visual similarity with metadata for more relevant results |
+| **Resumable Indexing** | Build the feature index in chunks — interrupt and resume anytime |
+| **Customizable Weights** | Adjust visual vs. metadata balance via sidebar slider |
+| **Pre-trained Model Included** | Comes with `fine_tuned_vgg19.keras` for immediate use |
+
+---
+
+## Where Users Can Get Help
+
+- **Issues**: Open a GitHub issue for bugs or feature requests
+- **Documentation**: This README covers setup and configuration; see code comments for API details
+- **Dataset**: The fashion product images are from [Kaggle](https://www.kaggle.com/datasets/paramaggarwal/fashion-product-images-dataset)
+
+---
+
+## Who Maintains and Contributes
+
+This project was developed as a deep learning demonstration project.
+
+### Contributing
+
+Contributions are welcome! To get started:
+
+1. Fork the repository
+2. Create a feature branch (`git checkout -b feature/amazing-feature`)
+3. Commit your changes (`git commit -m 'Add amazing feature'`)
+4. Push to the branch (`git push origin feature/amazing-feature`)
+5. Open a Pull Request
+
+Please ensure tests pass and code follows the existing style.
+
+---
+
+## License
+
+This project is available for educational and personal use. See the dataset [NOTICE](dataset/NOTICE ABOUT DATASET.txt) for data licensing terms.
