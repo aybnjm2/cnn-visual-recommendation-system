@@ -1,6 +1,6 @@
 """
 CNN Visual E-Commerce Recommender — Streamlit UI
-Upload a product image → get 10 visually similar recommendations.
+Upload a product image get 10 visually similar recommendations.
 """
 
 import streamlit as st
@@ -13,7 +13,7 @@ from PIL import Image
 import io
 import time
 
-# ── Page config (must be first) ────────────────────────────────────────────
+# Page config
 st.set_page_config(
     page_title="Projet CNN Deep Learning - Recommender System",
     page_icon="",
@@ -21,7 +21,7 @@ st.set_page_config(
     initial_sidebar_state="expanded",
 )
 
-# ── Custom CSS ──────────────────────────────────────────────────────────────
+# Custom CSS
 st.markdown(
     """
     <style>
@@ -118,12 +118,12 @@ st.markdown(
     unsafe_allow_html=True,
 )
 
-# ── Config ──────────────────────────────────────────────────────────────────
+# Config
 DEFAULT_IMAGES_DIR = "../dataset/images"
 DEFAULT_FEATURES_PATH = "../features/features.pkl"
 DEFAULT_STYLES_CSV = "../dataset/styles.csv"
 DEFAULT_FINE_TUNED_MODEL = "../models/fine_tuned_vgg19.keras"
-# ── Session state init ──────────────────────────────────────────────────────
+# Session state init
 if "feature_db" not in st.session_state:
     st.session_state.feature_db = None
 if "styles_df" not in st.session_state:
@@ -134,7 +134,7 @@ if "extractor" not in st.session_state:
     st.session_state.extractor = None
 
 
-# ── Loaders (cached) ────────────────────────────────────────────────────────
+# Loaders
 @st.cache_resource(show_spinner=False)
 def load_extractor(model_path=None):
     from feature_extractor import build_feature_extractor
@@ -171,7 +171,7 @@ def load_resources(features_path, styles_csv, alpha):
     return feature_db, styles_df, recommender
 
 
-# ── Sidebar ─────────────────────────────────────────────────────────────────
+# Sidebar
 with st.sidebar:
     st.markdown("## Configuration")
     st.markdown("---")
@@ -205,13 +205,13 @@ with st.sidebar:
     )
 
 
-# ── Load resources ───────────────────────────────────────────────────────────
+# Load resources
 with st.spinner("Loading resources…"):
     feature_db, styles_df, recommender = load_resources(features_path, styles_csv, alpha)
     extractor = load_extractor(model_path if model_path else None)
 
 
-# ── Hero ────────────────────────────────────────────────────────────────────
+# Hero
 col_title, col_status = st.columns([3, 1])
 with col_title:
     st.markdown(
@@ -237,7 +237,7 @@ with col_status:
 
 st.markdown("<br>", unsafe_allow_html=True)
 
-# ── Upload section ───────────────────────────────────────────────────────────
+# Upload section
 upload_col, preview_col = st.columns([1, 1], gap="large")
 
 with upload_col:
@@ -264,7 +264,7 @@ with preview_col:
         st.image(query_image, use_container_width=True)
 
 
-# ── Recommend button ─────────────────────────────────────────────────────────
+# Recommend button
 st.markdown("<br>", unsafe_allow_html=True)
 
 if uploaded_file:
